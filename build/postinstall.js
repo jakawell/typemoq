@@ -15,7 +15,7 @@ function gulpInstall(commands, opts) {
 	}
 }
 
-console.log('Falcon is in startup...');
+console.log('Falcon 9 is in startup...');
 const distExists = fs.existsSync('dist');
 if (!distExists)
     gulpInstall(['build']);
