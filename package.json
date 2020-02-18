@@ -31,8 +31,7 @@
     "typescript"
   ],
   "scripts": {
-    "build": "gulp build",
-    "postinstall": "node build/postinstall.js"
+    "build": "gulp build"
   },
   "dependencies": {
     "circular-json": "^0.3.1",
