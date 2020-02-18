@@ -5,7 +5,6 @@ var gulp = require('gulp');
 // load plugins
 var $ = require('gulp-load-plugins')();
 var del = require('del');
-var runSequence = require('run-sequence');
 var merge = require('merge2');
 var dts = require('dts-bundle');
 var karma = require('karma');
@@ -103,22 +102,23 @@ gulp.task('compile:src', function () {
 	return srcOpts.compileScripts();
 });
 
-gulp.task('dts-bundle:src', function () {
-	return dts.bundle({
+gulp.task('dts-bundle:src', function (done) {
+	dts.bundle({
 			name: 'typemoq-dts-bundle',
 			main: srcOpts.outDefPath + '/typemoq.d.ts',
 			emitOnIncludedFileNotFound: true,
 			emitOnNoIncludedFileNotFound: true
 		});
+	done();
 });
 
-gulp.task('copy-dts-bundle:src', ['dts-bundle:src'], function () {
+gulp.task('copy-dts-bundle:src', gulp.series('dts-bundle:src', function () {
 	return gulp.src([srcOpts.outDefPath + '/typemoq-dts-bundle.d.ts'])
 		.pipe($.replace('typemoq-dts-bundle', 'typemoq'))
 		.pipe($.rename('typemoq.d.ts'))
 		.pipe(gulp.dest(srcOpts.outBundlePath))
 		.pipe($.size());
-});
+}));
 
 gulp.task('rollup:src', function () {
 	return runRollup(
@@ -136,9 +136,9 @@ gulp.task('rollup:src', function () {
 	);
 });
 
-gulp.task('scripts:src', function (cb) {
-	runSequence('compile:src', 'copy-dts-bundle:src', 'rollup:src', cb);
-});
+gulp.task('scripts:src', gulp.series('compile:src', 'copy-dts-bundle:src', 'rollup:src', function (cb) {
+	cb()
+}));
 
 gulp.task('compile:test', function () {
 	return testOpts.compileScripts();
@@ -161,9 +161,9 @@ gulp.task('rollup:test', function () {
 	);
 });
 
-gulp.task('scripts:test', function (cb) {
-	runSequence('compile:test', 'rollup:test', cb);
-});
+gulp.task('scripts:test', gulp.series('compile:test', 'rollup:test', function (cb) {
+	cb();
+}));
 
 gulp.task('compile:test.es6', function () {
 	return testES6Opts.compileScripts();
@@ -201,9 +201,9 @@ function runRollup(srcPath, rollupOpts, destPath) {
     	.pipe(gulp.dest(destPath));
 }
 
-gulp.task('scripts:test.es6', function (cb) {
-	runSequence('compile:test.es6', 'rollup:test.es6', cb);
-});
+gulp.task('scripts:test.es6', gulp.series('compile:test.es6', 'rollup:test.es6', function (cb) {
+	cb();
+}));
 
 gulp.task('test:karma', function (cb) {
 	return runKarma('karma.conf.js', cb);
@@ -249,13 +249,13 @@ gulp.task('2dist', function () {
 		.pipe($.size());
 });
 
-gulp.task('minify', ['2dist'], function () {
+gulp.task('minify', gulp.series('2dist', function () {
 	return gulp.src(srcOpts.outJsBundleFullPath())
 		.pipe($.uglify())
 		.pipe($.rename('typemoq-min.js'))
 		.pipe(gulp.dest(distDir))
 		.pipe($.size());
-});
+}));
 
 gulp.task('extras', function () {
 	return gulp.src(['LICENSE', 'README.md'], { dot: true })
@@ -276,18 +276,18 @@ gulp.task('clean', function (cb) {
 	del([tempDir, distDir], cb);
 });
 
-gulp.task('build', ['clean'], function (cb) {
-	runSequence('scripts:src', 'scripts:test', 'scripts:test.es6', 'minify', cb);
-});
+gulp.task('build', gulp.series('clean', 'scripts:src', 'scripts:test', 'scripts:test.es6', 'minify', function (cb) {
+	cb();
+}));
 
-gulp.task('default', ['build'], function (cb) {
-	runSequence('test:karma', 'test:mocha', 'test:mocha.es6', cb);
-});
+gulp.task('default', gulp.series('build', 'test:karma', 'test:mocha', 'test:mocha.es6', function (cb) {
+	cb();
+}));
 
-gulp.task('release', ['default'], function (cb) {
-	runSequence('changelog', cb);
-});
+gulp.task('release', gulp.series('default', 'changelog', function (cb) {
+	cb();
+}));
 
-gulp.task('test:travis', ['build'], function (cb) {
-	runSequence('test:sauce', 'test:mocha', 'test:mocha.es6', cb);
-});
+gulp.task('test:travis', gulp.series('build', 'test:sauce', 'test:mocha', 'test:mocha.es6', function (cb) {
+	cb();
+}));

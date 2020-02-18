@@ -4,6 +4,7 @@ const fs = require('fs');
 const gulp = process.platform === 'win32' ? 'gulp.cmd' : 'gulp';
 
 function gulpInstall(commands, opts) {
+	console.log('installing...');
 	opts = opts || {};
 	opts.stdio = 'inherit';
 
@@ -14,6 +15,7 @@ function gulpInstall(commands, opts) {
 	}
 }
 
+console.log('Falcon is in startup...');
 const distExists = fs.existsSync('dist');
 if (!distExists)
     gulpInstall(['build']);
