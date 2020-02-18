@@ -273,7 +273,7 @@ gulp.task('changelog', function () {
 });
 
 gulp.task('clean', function (cb) {
-	del([tempDir, distDir], cb);
+	return del([tempDir, distDir], cb);
 });
 
 gulp.task('build', gulp.series('clean', 'scripts:src', 'scripts:test', 'scripts:test.es6', 'minify', function (cb) {
